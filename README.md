@@ -98,7 +98,17 @@ python dist_train_postdam_seg_neg_fp.py
 ## for deepglobe
 python dist_train_deepglobe_seg_neg_fp.py
 ```
+For deepglobe dataset, due to the lack of clear background partitioning in this dataset, some modifications may be necessary:
+1) Camutils'ori. py:
+Refine_cams_with_bkg_v2(): Line 164
+Cls_labels=torch. cat ((bkg_cls, cls_labels), dim=1) -># cls_labels=torch. cat ((cls_labels), dim=1)
+Cam_to'label(): Line 13
+_Pseudo label+=1-># p pseudo label+=1
+2) Model_seg_1eg_fp.py:
+Line 170-171: num classes 1->num classes
+Line 71-74: The output_channels of classifier&aux_classifier also do not need to be reduced by 1.
 You should remember to change the data path to your own and make sure all setting are matched.
+I will try my best to reorganize the code to minimize issues. Thank you for your understanding.
 ### Evalution
 To evaluation:
 ```bash
@@ -106,47 +116,7 @@ To evaluation:
 python infer_seg_iSAID.py
 ...
 ```
-<!-- You should get the training logs by running the above commands. Also, check our training log under `logs/`. -->
 
-[//]: # (## Results)
-
-[//]: # (Here we report the performance on VOC and COCO dataset. `MS+CRF` denotes multi-scale test and CRF processing.)
-
-[//]: # ()
-[//]: # (|Dataset|Backbone|*val*|Log|Weights|*val* &#40;with MS+CRF&#41;|*test* &#40;with MS+CRF&#41;|)
-
-[//]: # (|:---:|:---:|:---:|:---:|:---:|:---:|:---:|)
-
-[//]: # (|VOC|DeiT-B|68.1|[log]&#40;./logs/toco_deit-b_voc_20k.log&#41;|[weights]&#40;https://drive.google.com/drive/folders/18Ya0w-CwSFKgzS7gTecpqMn0qgfdf1tu?usp=share_link&#41;|69.8|70.5|)
-
-[//]: # (|VOC|ViT-B|69.2|[log]&#40;./logs/toco_vit-b_voc_20k.log&#41;|[weights]&#40;https://drive.google.com/drive/folders/18Ya0w-CwSFKgzS7gTecpqMn0qgfdf1tu?usp=share_link&#41;|71.1|72.2|)
-
-[//]: # (|COCO|DeiT-B|--|[log]&#40;./logs/toco_deit-b_coco_80k.log&#41;|[weights]&#40;https://drive.google.com/drive/folders/18Ya0w-CwSFKgzS7gTecpqMn0qgfdf1tu?usp=share_link&#41;|41.3|--|)
-
-[//]: # (|COCO|ViT-B|--|[log]&#40;./logs/toco_vit-b_coco_80k.log&#41;|[weights]&#40;https://drive.google.com/drive/folders/18Ya0w-CwSFKgzS7gTecpqMn0qgfdf1tu?usp=share_link&#41;|42.2|--|)
-
-[//]: # ()
-[//]: # ()
-[//]: # (## Citation)
-
-[//]: # (Please kindly cite our paper if you find it's helpful in your work.)
-
-[//]: # ()
-[//]: # (``` bibtex)
-
-[//]: # (@inproceedings{ru2023token,)
-
-[//]: # (    title = {Token Contrast for Weakly-Supervised Semantic Segmentation},)
-
-[//]: # (    author = {Lixiang Ru and Heliang Zheng and Yibing Zhan and Bo Du})
-
-[//]: # (    booktitle = {CVPR},)
-
-[//]: # (    year = {2023},)
-
-[//]: # (  })
-
-[//]: # (```)
 
 ## Acknowledgement
 

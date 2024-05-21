@@ -98,18 +98,10 @@ python dist_train_postdam_seg_neg_fp.py
 ## for deepglobe
 python dist_train_deepglobe_seg_neg_fp.py
 ```
-For deepglobe dataset, due to the lack of clear background partitioning in this dataset, some modifications may be necessary:
+For deepglobe dataset, due to the lack of clear background partitioning in this dataset, some modifications may be necessary. Please check the annotations in camutils_ori.py.
 
-1) camutils_ori.py:
-Refine_cams_with_bkg_v2(): Line 164
-cls_labels = torch.cat((bkg_cls, cls_labels), dim=1) -> # cls_labels=torch.cat((bkg_cls, cls_labels), dim=1)
-cam_to_label(): Line 13
-_pseudo_label += 1 -> # _pseudo_label += 1
-
-3) model_seg_neg_fp.py:
-Line 170-171: num_classes-1 -> num_classes
-Line 71-74: The output_channels of classifier&aux_classifier also do not need to be reduced by 1.
 You should remember to change the data path to your own and make sure all setting are matched.
+
 I will try my best to reorganize the code to minimize issues. Apologize for any inconvenience caused by the code issues and thank you for your understanding.
 
 ### Evalution

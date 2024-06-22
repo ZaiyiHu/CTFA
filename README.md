@@ -47,10 +47,8 @@ Line 170-171: Similarly, when outputting classifications, modifications are also
 cls_x4 = cls_x4.view(-1, self.num_classes)
 cls_aux = cls_aux.view(-1, self.num_classes)
 ② Modify the cam section: camutils'ori. py: line 13: No longer need to add+=1 to the pseudo label, otherwise it will be out of bounds.
-# _pseudo_label += 1
 Line 377, refine_camb_with_bkg_v2(): Background related information is no longer needed.
-# For deepglobe dataset training,  since no explicit backgroudn category is given, cls_labels no longer needs to cat with bkg_cls. So does the cams.
-# For instance,  you can change the code like this:
+
 '''
 b, _, h, w = images.shape
 _images = F.interpolate(images, size=[h // down_scale, w // down_scale], mode="bilinear",  align_corners=False)

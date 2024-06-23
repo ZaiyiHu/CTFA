@@ -35,7 +35,7 @@ and streamlined solution for WSSS.
 At present, the code repository seems to have the following issues that need to be addressed:
 #### 1) There is an error in the CRF code.
 ① For the potsdam dataset, simply modify line 117 in infer_seg_potsdam.py to: labelname=os. path. coin (labels_path, name+". png");
-② For the iSAID dataset, I should not have uploaded unprocessed labels through the link on Baidu Cloud. You can use a color mapping table to convert RGB images into category images, please see the attachment. Subsequently, in the def_job (i) of the CRF processing, add label=imageio. imread (labelname) followed by label=convertecolor_to_class (label) conversion;
+② For the iSAID dataset, I should not have uploaded unprocessed labels through the link on Baidu Cloud. You can use a color mapping table to convert RGB images into category images. Subsequently, in the def_job (i) of the CRF processing, add label=imageio. imread (labelname) followed by label=convertecolor_to_class (label) conversion;
 ③ For the deepglobal dataset, this issue should not exist. However, it should be noted that during crf processing, all datasets should change the num_classes in the 21 rows def scores() in evaluate.py accordingly (16,6,7). Alternatively, you can directly modify the parameters provided.
 #### 2) When training the Deepglobal model, the background was not used. Therefore, the following modifications need to be made:
 ① Modify the model section: model_seg_ceg_fp. py: line 71-73: The classifier output dimension does not need to be further reduced because there is no background left.

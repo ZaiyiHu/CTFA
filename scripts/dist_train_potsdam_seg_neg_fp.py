@@ -58,7 +58,7 @@ parser.add_argument("--scales", default=(0.5, 2), help="random rescale in traini
 
 parser.add_argument("--optimizer", default='PolyWarmupAdamW', type=str, help="optimizer")
 parser.add_argument("--lr", default=4e-5, type=float, help="learning rate")
-parser.add_argument("--warmup_lr", default=3e-6, type=float, help="warmup_lr")
+parser.add_argument("--warmup_lr", default=1e-6, type=float, help="warmup_lr")
 parser.add_argument("--wt_decay", default=1e-2, type=float, help="weights decay")
 parser.add_argument("--betas", default=(0.9, 0.999), help="betas for Adam")
 parser.add_argument("--power", default=0.9, type=float, help="poweer factor for poly scheduler")
@@ -68,7 +68,7 @@ parser.add_argument("--log_iters", default=200, type=int, help=" logging iters")
 parser.add_argument("--eval_iters", default=2000, type=int, help="validation iters")
 parser.add_argument("--warmup_iters", default=1500, type=int, help="warmup_iters")
 
-parser.add_argument("--high_thre", default=0.6, type=float, help="high_bkg_score")
+parser.add_argument("--high_thre", default=0.7, type=float, help="high_bkg_score")
 parser.add_argument("--low_thre", default=0.25, type=float, help="low_bkg_score")
 parser.add_argument("--bkg_thre", default=0.6, type=float, help="bkg_score")
 parser.add_argument("--cam_scales", default=(1.0, 0.5, 1.5), help="multi_scales for cam")

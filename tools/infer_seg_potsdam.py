@@ -19,7 +19,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from datasets import potsdam
-from model.model_seg_neg import network
+from model.model_seg_neg_fp import network
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from utils import evaluate, imutils
@@ -177,7 +177,7 @@ def validate(args=None):
         new_state_dict[k] = v
     # new_state_dict.pop("conv.weight")
     # new_state_dict.pop("aux_conv.weight")
-    model.load_state_dict(state_dict=new_state_dict, strict=False)
+    model.load_state_dict(state_dict=new_state_dict)
     model.eval()
 
     seg_score = _validate(model=model, data_loader=val_loader, args=args)

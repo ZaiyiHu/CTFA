@@ -3,14 +3,6 @@ import os
 import sys
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 sys.path.append(".")
-sys.path.append(r'/home/zaiyihu/CodeSpace/CTFA-main')
-sys.path.append(r'/home/zaiyihu/CodeSpace/CTFA-main/datasets')
-sys.path.append(r'/home/zaiyihu/CodeSpace/CTFA-main/model')
-sys.path.append(r'/home/zaiyihu/CodeSpace/CTFA-main/utils')
-sys.path.append(r'/home/hzy/CTFA-main/CTFA-main')
-sys.path.append(r'/home/hzy/CTFA-main/CTFA-main/datasets')
-sys.path.append(r'/home/hzy/CTFA-main/CTFA-main/model')
-sys.path.append(r'/home/hzy/CTFA-main/CTFA-main/utils')
 from collections import OrderedDict
 import imageio
 import joblib
@@ -29,13 +21,14 @@ from utils.pyutils import format_tabs
 parser = argparse.ArgumentParser()
 parser.add_argument("--infer_set", default="test", type=str, help="infer_set")
 parser.add_argument("--pooling", default="gmp", type=str, help="pooling method")
-parser.add_argument("--model_path", default="/home/zaiyihu/CodeSpace/CTFA-main/scripts/work_dir_potsdam_wseg/2023-08-19-16-43-48-096116/checkpoints/model_iter_20000.pth", type=str, help="model_path")
+parser.add_argument("--model_path", default=None, type=str, help="model_path")
 
 
 parser.add_argument("--backbone", default='deit_base_patch16_224', type=str, help="vit_base_patch16_224")
 parser.add_argument("--data_folder", default='/data1/zaiyihu/Datasets/potsdam_IRRG_wiB_512_256_dl', type=str, help="dataset folder")
-parser.add_argument("--list_folder", default='/home/zaiyihu/CodeSpace/CTFA-main/datasets/potsdam', type=str, help="train/val/test list file")
+parser.add_argument("--list_folder", default='/data1/zaiyihu/CodeSpace/ToCo-main/datasets/potsdam', type=str, help="train/val/test list file")
 parser.add_argument("--num_classes", default=6, type=int, help="number of classes")
+parser.add_argument("--crop_size", default=320, type=int, help="crop_size in training")
 parser.add_argument("--ignore_index", default=255, type=int, help="random index")
 parser.add_argument("--scales", default=(1.0, 1.5, 1.25), help="multi_scales for seg")
 
@@ -56,27 +49,14 @@ def _validate(model=None, data_loader=None, args=None):
             inputs = inputs.cuda()
             labels = labels.cuda()
             cls_label = cls_label.cuda()
+            inputs = F.interpolate(inputs, size=[args.crop_size, args.crop_size], mode='bilinear', align_corners=False)
 
-            _, _, h, w = inputs.shape
-            seg_list = []
-            for sc in args.scales:
-                _h, _w = int(h * sc), int(w * sc)
-
-                _inputs = F.interpolate(inputs, size=[_h, _w], mode='bilinear', align_corners=False)
-                inputs_cat = torch.cat([_inputs, _inputs.flip(-1)], dim=0)
-
-                segs = model(inputs_cat, )[1]
-                segs = F.interpolate(segs, size=labels.shape[1:], mode='bilinear', align_corners=False)
-
-                seg = segs[:1, ...] + segs[1:, ...].flip(-1)
-
-                seg_list.append(seg)
-            seg = torch.max(torch.stack(seg_list, dim=0), dim=0)[0]
-
-            seg_pred += list(torch.argmax(seg, dim=1).cpu().numpy().astype(np.int16))
+            cls, segs, _, _ = model(inputs, )
+            resized_segs = F.interpolate(segs, size=labels.shape[1:], mode='bilinear', align_corners=False)
+            seg_pred += list(torch.argmax(resized_segs, dim=1).cpu().numpy().astype(np.int16))
             gts += list(labels.cpu().numpy().astype(np.int16))
             os.makedirs(args.logits_dir, exist_ok=True)
-            np.save(args.logits_dir + "/" + name[0] + '.npy', {"msc_seg": seg.cpu().numpy()})
+            np.save(args.logits_dir + "/" + name[0] + '.npy', {"msc_seg": resized_segs.cpu().numpy()})
 
     seg_score = evaluate.scores(gts, seg_pred)
 
@@ -115,11 +95,8 @@ def crf_proc():
 
         image_name = os.path.join(images_path, name + ".png")
         image = imageio.imread(image_name).astype(np.float32)
-        label_name = os.path.join(labels_path, name + "_instance_color_RGB.png")
-        if "test" in args.infer_set:
-            label = image[:, :, 0]
-        else:
-            label = imageio.imread(label_name)
+        label_name = os.path.join(labels_path, name + ".png")
+        label = imageio.imread(label_name)
 
         H, W, _ = image.shape
         logit = torch.FloatTensor(logit)

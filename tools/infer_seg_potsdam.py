@@ -26,7 +26,7 @@ parser.add_argument("--model_path", default=None, type=str, help="model_path")
 
 parser.add_argument("--backbone", default='deit_base_patch16_224', type=str, help="vit_base_patch16_224")
 parser.add_argument("--data_folder", default='/data1/zaiyihu/Datasets/potsdam_IRRG_wiB_512_256_dl', type=str, help="dataset folder")
-parser.add_argument("--list_folder", default='/data1/zaiyihu/CodeSpace/ToCo-main/datasets/potsdam', type=str, help="train/val/test list file")
+parser.add_argument("--list_folder", default='/data1/zaiyihu/CodeSpace/CTFA-main/datasets/potsdam', type=str, help="train/val/test list file")
 parser.add_argument("--num_classes", default=6, type=int, help="number of classes")
 parser.add_argument("--crop_size", default=320, type=int, help="crop_size in training")
 parser.add_argument("--ignore_index", default=255, type=int, help="random index")

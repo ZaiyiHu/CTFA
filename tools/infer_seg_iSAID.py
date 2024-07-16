@@ -3,14 +3,6 @@ import os
 import sys
 os.environ['CUDA_VISIBLE_DEVICES'] = '2'
 sys.path.append(".")
-sys.path.append(r'/home/zaiyihu/CodeSpace/CTFA-main')
-sys.path.append(r'/home/zaiyihu/CodeSpace/CTFA-main/datasets')
-sys.path.append(r'/home/zaiyihu/CodeSpace/CTFA-main/model')
-sys.path.append(r'/home/zaiyihu/CodeSpace/CTFA-main/utils')
-sys.path.append(r'/home/hzy/CTFA-main/CTFA-main')
-sys.path.append(r'/home/hzy/CTFA-main/CTFA-main/datasets')
-sys.path.append(r'/home/hzy/CTFA-main/CTFA-main/model')
-sys.path.append(r'/home/hzy/CTFA-main/CTFA-main/utils')
 from collections import OrderedDict
 import imageio
 import joblib
@@ -29,13 +21,13 @@ from utils.pyutils import format_tabs
 parser = argparse.ArgumentParser()
 parser.add_argument("--infer_set", default="test", type=str, help="infer_set")
 parser.add_argument("--pooling", default="gmp", type=str, help="pooling method")
-# parser.add_argument("--model_path", default="workdir_iSAID_final2/2022-11-04-01-50-48-441426/checkpoints/model_iter_20000.pth", type=str, help="model_path")
-parser.add_argument("--model_path", default="/home/zaiyihu/CodeSpace/CTFA-main/scripts/work_dir_iSAID_wseg/2023-11-16-12-15-37-348900/checkpoints/Best mIoU: 35.54980699327531, model: AWTS model_iter_12000.pth", type=str, help="model_path")
+# parser.add_argument("--model_path", default=None, type=str, help="model_path")
+parser.add_argument("--model_path", default=None, type=str, help="model_path")
 
-
+parser.add_argument("--crop_size", default=320, type=int, help="crop_size in training")
 parser.add_argument("--backbone", default='deit_base_patch16_224', type=str, help="vit_base_patch16_224")
 parser.add_argument("--data_folder", default='/data1/zaiyihu/Datasets/iSAID_patches_512/sampled_process', type=str, help="dataset folder")
-parser.add_argument("--list_folder", default='/home/zaiyihu/CodeSpace/CTFA-main/datasets/iSAID', type=str, help="train/val/test list file")
+parser.add_argument("--list_folder", default='/data1/zaiyihu/CodeSpace/CTFA-main/datasets/iSAID', type=str, help="train/val/test list file")
 parser.add_argument("--num_classes", default=16, type=int, help="number of classes")
 parser.add_argument("--ignore_index", default=255, type=int, help="random index")
 parser.add_argument("--scales", default=(1.0, 1.5, 1.25), help="multi_scales for seg")
@@ -50,39 +42,64 @@ def _validate(model=None, data_loader=None, args=None):
         gts, seg_pred = [], []
         count = 0
         for idx, data in tqdm(enumerate(data_loader), total=len(data_loader), ncols=100, ascii=" >="):
+            count += 1
 
             name, inputs, labels, cls_label = data
 
             inputs = inputs.cuda()
             labels = labels.cuda()
             cls_label = cls_label.cuda()
+            inputs = F.interpolate(inputs, size=[args.crop_size, args.crop_size], mode='bilinear', align_corners=False)
 
-            _, _, h, w = inputs.shape
-            seg_list = []
-            for sc in args.scales:
-                _h, _w = int(h * sc), int(w * sc)
-
-                _inputs = F.interpolate(inputs, size=[_h, _w], mode='bilinear', align_corners=False)
-                inputs_cat = torch.cat([_inputs, _inputs.flip(-1)], dim=0)
-
-                segs = model(inputs_cat, )[1]
-                segs = F.interpolate(segs, size=labels.shape[1:], mode='bilinear', align_corners=False)
-
-                seg = segs[:1, ...] + segs[1:, ...].flip(-1)
-
-                seg_list.append(seg)
-            seg = torch.max(torch.stack(seg_list, dim=0), dim=0)[0]
-
-            seg_pred += list(torch.argmax(seg, dim=1).cpu().numpy().astype(np.int16))
+            cls, segs, _, _ = model(inputs, )
+            resized_segs = F.interpolate(segs, size=labels.shape[1:], mode='bilinear', align_corners=False)
+            seg_pred += list(torch.argmax(resized_segs, dim=1).cpu().numpy().astype(np.int16))
             gts += list(labels.cpu().numpy().astype(np.int16))
             os.makedirs(args.logits_dir, exist_ok=True)
-            np.save(args.logits_dir + "/" + name[0] + '.npy', {"msc_seg": seg.cpu().numpy()})
+            np.save(args.logits_dir + "/" + name[0] + '.npy', {"msc_seg": resized_segs.cpu().numpy()})
 
     seg_score = evaluate.scores(gts, seg_pred)
 
     print(format_tabs([seg_score], ["seg_pred"], cat_list=iSAID.class_list))
 
     return seg_score
+
+# 定义颜色表
+color_table = {
+    (0, 127, 255): 14,  # plane
+    (0, 0, 127): 9,  # small_vehicle
+    (0, 127, 127): 8,  # large_vehicle
+    (0, 0, 63): 1,  # ship
+    (0, 100, 155): 15,  # harbor
+    (0, 63, 127): 4,  # tennis_court
+    (0, 0, 255): 11,  # swimming_pool
+    (0, 63, 255): 3,  # baseball_diamond
+    (0, 63, 63): 2,  # storage_tank
+    (0, 127, 63): 7,  # bridge
+    (0, 63, 0): 6,  # Ground_Track_Field
+    (0, 0, 191): 10,  # helicopter
+    (0, 63, 191): 5,  # basketball_court
+    (0, 127, 191): 13,  # Soccer_ball_field
+    (0, 191, 127): 12  # Roundabout
+}
+
+
+def convert_color_to_class(image):
+    # 获取图像的高度和宽度
+    height, width, _ = image.shape
+
+    # 创建一个空的类别图像，初始化为零
+    class_image = np.zeros((height, width), dtype=np.uint8)
+
+    # 遍历颜色表中的每个颜色和对应的类别
+    for color, class_id in color_table.items():
+        # 创建一个掩码，选择图像中所有匹配该颜色的位置
+        bgr_color = color[::-1]
+        mask = np.all(image == bgr_color, axis=-1)
+        # 将这些位置设置为对应的类别编号
+        class_image[mask] = class_id
+
+    return class_image
 
 
 def crf_proc():
@@ -116,11 +133,8 @@ def crf_proc():
         image_name = os.path.join(images_path, name + ".png")
         image = imageio.imread(image_name).astype(np.float32)
         label_name = os.path.join(labels_path, name + "_instance_color_RGB.png")
-        if "test" in args.infer_set:
-            label = image[:, :, 0]
-        else:
-            label = imageio.imread(label_name)
-
+        label = imageio.imread(label_name)
+        label = convert_color_to_class(label)
         H, W, _ = image.shape
         logit = torch.FloatTensor(logit)
         logit = F.interpolate(logit, size=(H, W), mode="bilinear", align_corners=False)

@@ -60,8 +60,6 @@ cams_with_bkg_l = cams
 _cams_with_bkg_l = F.interpolate(cams_with_bkg_l, size=[h // down_scale, w // down_scale], mode="bilinear",
 align_corners=False)
 '''
-#### 2) Performance issues
-There seems to be somehow an issue with the hyperparameters provided by the code. You can first try using ToCo to train these remote sensing segmentation datasets.
 
 ## Data Preparations
 <details>
@@ -107,6 +105,8 @@ Please refer to datasets/deepglobe/deepglobe_clip_dataset.py.
 </details>
 
 We also provide the BaiduNetDiskDownload link for processed dataset at [Here](https://pan.baidu.com/s/1hkCg8uX2oGpNYORL2KfZug). Code: CTFA
+
+Checkpoints may try [this](链接：https://pan.baidu.com/s/18wz4jmMXXNSdC_0acJsJZw). Code:r1k6 
 
 
 

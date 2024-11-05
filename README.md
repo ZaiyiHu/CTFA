@@ -106,7 +106,7 @@ Please refer to datasets/deepglobe/deepglobe_clip_dataset.py.
 
 We also provide the BaiduNetDiskDownload link for processed dataset at [Here](https://pan.baidu.com/s/1hkCg8uX2oGpNYORL2KfZug). Code: CTFA
 
-Checkpoints may try [this](链接：https://pan.baidu.com/s/18wz4jmMXXNSdC_0acJsJZw). Code:r1k6 
+Checkpoints may try [this](https://pan.baidu.com/s/18wz4jmMXXNSdC_0acJsJZw). Code:r1k6 
 
 
 
